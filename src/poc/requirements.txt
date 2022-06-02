@@ -2,3 +2,4 @@ boto3==1.17.85
 pytest==6.2.4
 sure==2.0.0
 moto==3.1.11
+freezegun==1.2.1
