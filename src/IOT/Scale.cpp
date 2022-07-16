@@ -11,7 +11,8 @@ Scale::Scale(int datPin, int sckPin) {
   this->SckPin = sckPin;
 
   this->scale.begin(datPin, sckPin);
-  this->scale.set_scale(2280.f);                      // this value is obtained by calibrating the scale with known weights; see the README for details
+  // calibrated on 16/07/2022
+  this->scale.set_scale(1350.5F);   // this value is obtained by calibrating the scale with known weights; see the README for details
   this->scale.tare();				        // reset the scale to 0
 }
 
