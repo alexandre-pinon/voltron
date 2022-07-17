@@ -19,7 +19,8 @@ int oldDigitalVal;
 
 String WifiName = "ONEPLUS vm";
 String WifiPass = "24081998";
-String WifiRemoteHost = "voltron-team-18.francecentral.cloudapp.azure.com", WifiRemotePort = "80"; // need to change this and the request route
+String WifiRemoteHost = "20.216.156.125", WifiRemotePort = "80"; // need to change this and the request route
+//String WifiRemoteHost = "voltron-team-18.francecentral.cloudapp.azure.com", WifiRemotePort = "80"; // need to change this and the request route
 ESP *Esp;
 
 Segment *Display;
@@ -49,7 +50,7 @@ void setup ()
 
   Display = new Segment();
 
-  randomSeed(analogRead(A7) + analogRead(A5)); //random data from unconnected Pin
+  randomSeed(millis()); //random data from unconnected Pin
   hardwareId = random(1, 999);
   hardwareIdStr = String(hardwareId);
 

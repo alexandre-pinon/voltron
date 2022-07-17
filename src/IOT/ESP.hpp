@@ -10,7 +10,7 @@ class ESP {
         void SendRequest(String remoteHost, String port, String request);
 
     private:
-        String GetFromESP8266(const int timeout);
+        String GetFromESP8266(const int timeout, bool display = false);
 
         String _wifiName;
         String _wifiPass;
