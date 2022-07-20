@@ -64,7 +64,7 @@ class WindowGenerator():
 
     @property
     def test(self):
-        return self.make_dataset(self.test_df)
+        return self.make_dataset(self.test_df, shuffle=False)
 
     @property
     def example(self):
@@ -94,9 +94,74 @@ class WindowGenerator():
 
         return inputs, labels
 
+    def plot_ts(self, model, title="Model forecast"):
+        predictions = tf.squeeze(model.predict(self.test))
+        predictions_size = len(predictions)
+        fig, (ax1, ax2, ax3, ax4) = plt.subplots(
+            4,
+            1,
+            figsize=(20, 40),
+        )
+
+        plot_time_series(ax1,
+                         self.test_df.index[-predictions_size:],
+                         self.test_df["meantemp"][-predictions_size:],
+                         format="-",
+                         label="Test data",
+                         c='darkred')
+        plot_time_series(ax1,
+                         self.test_df.index[-predictions_size:],
+                         predictions[:, self.column_indices["meantemp"]],
+                         "Mean temperature (°C)",
+                         format="o--",
+                         label=title,
+                         c='orange')
+        plot_time_series(ax2,
+                         self.test_df.index[-predictions_size:],
+                         self.test_df["humidity"][-predictions_size:],
+                         "Humidity (%)",
+                         format="-",
+                         label='Train data',
+                         c='darkblue')
+        plot_time_series(ax2,
+                         self.test_df.index[-predictions_size:],
+                         predictions[:, self.column_indices["humidity"]],
+                         "Humidity (%)",
+                         format="o--",
+                         label=title,
+                         c='lightblue')
+        plot_time_series(ax3,
+                         self.test_df.index[-predictions_size:],
+                         self.test_df["wind_speed"][-predictions_size:],
+                         "Wind speed (mph)",
+                         format="-",
+                         label='Train data',
+                         c='darkgreen')
+        plot_time_series(ax3,
+                         self.test_df.index[-predictions_size:],
+                         predictions[:, self.column_indices["wind_speed"]],
+                         "Wind speed (mph)",
+                         format="o--",
+                         label=title,
+                         c='lightgreen')
+        plot_time_series(ax4,
+                         self.test_df.index[-predictions_size:],
+                         self.test_df["meanpressure"][-predictions_size:],
+                         "Mean pressure (mbar)",
+                         format="-",
+                         label='Train data',
+                         c='darkviolet')
+        plot_time_series(ax4,
+                         self.test_df.index[-predictions_size:],
+                         predictions[:, self.column_indices["meanpressure"]],
+                         "Mean pressure (mbar)",
+                         format="o--",
+                         label=title,
+                         c='pink')
+
     def plot(self, model=None, plot_col='meantemp', max_subplots=3):
         inputs, labels = self.example
-        plt.figure(figsize=(12, 8))
+        plt.figure(figsize=(16, 8))
         plot_col_index = self.column_indices[plot_col]
         max_n = min(max_subplots, len(inputs))
 
@@ -139,14 +204,14 @@ class WindowGenerator():
 
         plt.xlabel('Time (day)')
 
-    def make_dataset(self, data):
+    def make_dataset(self, data, shuffle=True):
         data = np.array(data, dtype=np.float32)
         ds = tf.keras.utils.timeseries_dataset_from_array(
             data=data,
             targets=None,
             sequence_length=self.total_window_size,
             sequence_stride=1,
-            shuffle=True,
+            shuffle=shuffle,
             batch_size=32,
         )
 
@@ -157,18 +222,11 @@ class WindowGenerator():
 
 class Baseline(tf.keras.Model):
 
-    def __init__(self, label_index=None):
-        super().__init__()
-        self.label_index = label_index
-
     def call(self, inputs):
-        if self.label_index is None:
-            return inputs
-        result = inputs[:, :, self.label_index]
-        return result[:, :, tf.newaxis]
+        return tf.expand_dims(inputs[:, -1, :], axis=1)
 
 
-class ResidualWrapper(tf.keras.Model):
+class CustomResidualWrapper(tf.keras.Model):
 
     def __init__(self, model):
         super().__init__()
@@ -180,7 +238,8 @@ class ResidualWrapper(tf.keras.Model):
         # The prediction for each time step is the input
         # from the previous time step plus the delta
         # calculated by the model.
-        return inputs + delta
+        res = inputs[:, -1, :] + delta
+        return tf.expand_dims(res, axis=1)
 
 
 def plot_time_series(ax,
